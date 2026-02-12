@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Usage Tracker - Team 2</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Work+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #0a84ff;
+            --primary-dark: #0066cc;
+            --bg-main: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2128;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --success: #3fb950;
+            --warning: #d29922;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-card h3 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .stat-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .progress-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 1rem;
+        }
+
+        .progress-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 8;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: var(--primary);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .fab-button {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 1.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(10, 132, 255, 0.4);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 999;
+            font-family: 'Work Sans', sans-serif;
+        }
+
+        .fab-button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(10, 132, 255, 0.5);
+        }
+
+        .fab-button svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .quick-add {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1.5rem;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--bg-main);
+            color: var(--text-primary);
+        }
+
+        .quick-add h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-primary);
+            font-family: 'Work Sans', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group select option {
+            padding: 0.75rem;
+            line-height: 2;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Work Sans', sans-serif;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Work Sans', sans-serif;
+            margin-top: 1.5rem;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .entries-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .entries-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .entries-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .entry-card {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s ease;
+            transition: all 0.2s ease;
+        }
+
+        .entry-card:hover {
+            border-color: var(--primary);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            gap: 1rem;
+        }
+
+        .entry-tool {
+            display: inline-block;
+            background: var(--gradient-1);
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .entry-time {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .entry-category {
+            display: inline-block;
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .entry-description {
+            color: var(--text-primary);
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .entry-outcome {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-style: italic;
+            padding-left: 1rem;
+            border-left: 2px solid var(--border);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .export-section {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--success);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            z-index: 1000;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-card:has(.patterns-grid) {
+            margin-bottom: 2.5rem;
+        }
+
+        .pattern-item {
+            background: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .pattern-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .pattern-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI Usage Tracker</h1>
+            <p>Team 2 • Month 1 Challenge: Use AI 6+ times daily</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="stat-card" style="grid-column: span 1;">
+                <div class="progress-ring">
+                    <svg width="120" height="120">
+                        <circle class="progress-ring-circle" cx="60" cy="60" r="52"></circle>
+                        <circle class="progress-ring-fill" cx="60" cy="60" r="52" id="progressCircle"></circle>
+                    </svg>
+                    <div class="progress-text" id="todayProgress">0/6</div>
+                </div>
+                <h3>Today's Progress</h3>
+                <div class="stat-label" id="todayStatus">Keep going!</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Total Uses This Month</h3>
+                <div class="stat-value" id="totalUses">0</div>
+                <div class="stat-label">Across all tools</div>
+            </div>
+
+            <div class="stat-card">
+                <h3>Current Streak</h3>
+                <div class="stat-value" id="streak">0</div>
+                <div class="stat-label">Days hitting 6+ uses</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <h3>Usage Patterns - Why You Use AI</h3>
+            <div class="patterns-grid" id="patternsGrid">
+                <div class="pattern-item">
+                    <div class="pattern-count">0</div>
+                    <div class="pattern-label">Research</div>
+                </div>
+                <div class="pattern-item">
+                    <div class="pattern-count">0</div>
+                    <div class="pattern-label">Writing</div>
+                </div>
+                <div class="pattern-item">
+                    <div class="pattern-count">0</div>
+                    <div class="pattern-label">Coding</div>
+                </div>
+                <div class="pattern-item">
+                    <div class="pattern-count">0</div>
+                    <div class="pattern-label">Problem Solving</div>
+                </div>
+                <div class="pattern-item">
+                    <div class="pattern-count">0</div>
+                    <div class="pattern-label">Analysis</div>
+                </div>
+                <div class="pattern-item">
+                    <div class="pattern-count">0</div>
+                    <div class="pattern-label">Other</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="entries-section">
+            <div class="entries-header">
+                <h2>Recent Entries</h2>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="today">Today</button>
+                    <button class="filter-btn" data-filter="week">This Week</button>
+                </div>
+            </div>
+
+            <div id="entriesList"></div>
+
+            <div class="export-section">
+                <button class="btn btn-secondary" onclick="exportData()">Export Summary</button>
+                <button class="btn btn-secondary" onclick="clearData()">Clear All Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab-button" onclick="openModal()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add AI Usage
+    </button>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+        <div class="quick-add" onclick="event.stopPropagation()">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h2>➕ Add New Entry</h2>
+            <form id="entryForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="aiTool">AI Tool Used</label>
+                        <select id="aiTool" required>
+                            <option value="">Select a tool...</option>
+                            <option value="Claude">Claude</option>
+                            <option value="ChatGPT">ChatGPT</option>
+                            <option value="Gemini">Gemini</option>
+                            <option value="Copilot">GitHub Copilot</option>
+                            <option value="Cursor">Cursor</option>
+                            <option value="Perplexity">Perplexity</option>
+                            <option value="Midjourney">Midjourney</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category">Purpose / Category</label>
+                        <select id="category" required>
+                            <option value="">Select category...</option>
+                            <option value="Research">Research</option>
+                            <option value="Writing">Writing</option>
+                            <option value="Coding">Coding</option>
+                            <option value="Problem Solving">Problem Solving</option>
+                            <option value="Analysis">Data Analysis</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">What did you use it for?</label>
+                    <textarea id="description" placeholder="Describe the task or question..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="outcome">How did it help you?</label>
+                    <textarea id="outcome" placeholder="What was the result or benefit?"></textarea>
+                </div>
+
+                <button type="submit" class="btn">Add Entry</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let entries = JSON.parse(localStorage.getItem('aiUsageEntries') || '[]');
+        let currentFilter = 'all';
+
+        // Modal controls
+        function openModal() {
+            document.getElementById('modalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target.id === 'modalOverlay') {
+                closeModal();
+            }
+        }
+
+        // Keyboard shortcut - ESC to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            updateDashboard();
+            renderEntries();
+            setupEventListeners();
+            console.log('Initialization complete');
+        });
+
+        function setupEventListeners() {
+            // Form submission
+            const form = document.getElementById('entryForm');
+            console.log('Form element found:', form);
+            
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    console.log('Form submitted!');
+                    e.preventDefault();
+                    addEntry();
+                });
+                console.log('Form listener attached');
+            } else {
+                console.error('Form not found!');
+            }
+
+            // Also add click handler directly to the button as backup
+            const submitBtn = document.querySelector('#entryForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function(e) {
+                    console.log('Button clicked directly!');
+                    e.preventDefault();
+                    
+                    // Validate required fields
+                    const tool = document.getElementById('aiTool').value;
+                    const category = document.getElementById('category').value;
+                    const description = document.getElementById('description').value;
+                    
+                    if (!tool || !category || !description) {
+                        alert('Please fill in all required fields');
+                        return;
+                    }
+                    
+                    addEntry();
+                });
+                console.log('Button click listener attached');
+            }
+
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    renderEntries();
+                });
+            });
+        }
+
+        function addEntry() {
+            console.log('Adding entry...');
+            
+            const entry = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                tool: document.getElementById('aiTool').value,
+                category: document.getElementById('category').value,
+                description: document.getElementById('description').value,
+                outcome: document.getElementById('outcome').value
+            };
+
+            console.log('Entry data:', entry);
+
+            entries.unshift(entry);
+            localStorage.setItem('aiUsageEntries', JSON.stringify(entries));
+
+            console.log('Entry saved. Total entries:', entries.length);
+
+            // Reset form
+            document.getElementById('entryForm').reset();
+
+            // Close modal
+            closeModal();
+
+            // Update UI
+            updateDashboard();
+            renderEntries();
+            showToast('Entry added successfully!');
+        }
+
+        function updateDashboard() {
+            const today = new Date().toDateString();
+            const todayEntries = entries.filter(e => new Date(e.timestamp).toDateString() === today);
+            const todayCount = todayEntries.length;
+
+            // Update today's progress
+            document.getElementById('todayProgress').textContent = `${todayCount}/6`;
+            const progress = Math.min(todayCount / 6, 1);
+            const circumference = 2 * Math.PI * 52;
+            const offset = circumference - (progress * circumference);
+            document.getElementById('progressCircle').style.strokeDasharray = circumference;
+            document.getElementById('progressCircle').style.strokeDashoffset = offset;
+
+            // Update status
+            const statusEl = document.getElementById('todayStatus');
+            if (todayCount >= 6) {
+                statusEl.textContent = '🎉 Goal achieved!';
+                statusEl.style.color = 'var(--success)';
+            } else if (todayCount >= 3) {
+                statusEl.textContent = 'Halfway there!';
+                statusEl.style.color = 'var(--warning)';
+            } else {
+                statusEl.textContent = 'Keep going!';
+                statusEl.style.color = 'var(--text-secondary)';
+            }
+
+            // Total uses
+            document.getElementById('totalUses').textContent = entries.length;
+
+            // Calculate streak
+            const streak = calculateStreak();
+            document.getElementById('streak').textContent = streak;
+
+            // Update patterns
+            updatePatterns();
+        }
+
+        function calculateStreak() {
+            const dailyCounts = {};
+            entries.forEach(e => {
+                const date = new Date(e.timestamp).toDateString();
+                dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+            });
+
+            let streak = 0;
+            let currentDate = new Date();
+            
+            while (true) {
+                const dateStr = currentDate.toDateString();
+                if (dailyCounts[dateStr] >= 6) {
+                    streak++;
+                    currentDate.setDate(currentDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            return streak;
+        }
+
+        function updatePatterns() {
+            const patterns = {
+                'Research': 0,
+                'Writing': 0,
+                'Coding': 0,
+                'Problem Solving': 0,
+                'Analysis': 0,
+                'Other': 0
+            };
+
+            entries.forEach(e => {
+                if (patterns.hasOwnProperty(e.category)) {
+                    patterns[e.category]++;
+                }
+            });
+
+            const grid = document.getElementById('patternsGrid');
+            grid.innerHTML = Object.entries(patterns).map(([label, count]) => `
+                <div class="pattern-item">
+                    <div class="pattern-count">${count}</div>
+                    <div class="pattern-label">${label}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderEntries() {
+            const filteredEntries = getFilteredEntries();
+            const listEl = document.getElementById('entriesList');
+
+            if (filteredEntries.length === 0) {
+                listEl.innerHTML = `
+                    <div class="empty-state">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>No entries yet. Add your first AI usage above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = filteredEntries.map(entry => {
+                const date = new Date(entry.timestamp);
+                const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                return `
+                    <div class="entry-card">
+                        <div class="entry-header">
+                            <span class="entry-tool">${entry.tool}</span>
+                            <span class="entry-time">${dateStr} ${timeStr}</span>
+                        </div>
+                        <div class="entry-category">${entry.category}</div>
+                        <div class="entry-description">${entry.description}</div>
+                        ${entry.outcome ? `<div class="entry-outcome">→ ${entry.outcome}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFilteredEntries() {
+            const today = new Date().toDateString();
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+
+            switch(currentFilter) {
+                case 'today':
+                    return entries.filter(e => new Date(e.timestamp).toDateString() === today);
+                case 'week':
+                    return entries.filter(e => new Date(e.timestamp) >= weekAgo);
+                default:
+                    return entries;
+            }
+        }
+
+        function exportData() {
+            const summary = generateSummary();
+            const blob = new Blob([summary], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-usage-summary-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            showToast('Summary exported!');
+        }
+
+        function generateSummary() {
+            const patterns = {};
+            const tools = {};
+            
+            entries.forEach(e => {
+                patterns[e.category] = (patterns[e.category] || 0) + 1;
+                tools[e.tool] = (tools[e.tool] || 0) + 1;
+            });
+
+            let summary = `AI USAGE SUMMARY - Team 2, Month 1\n`;
+            summary += `Generated: ${new Date().toLocaleDateString()}\n\n`;
+            summary += `OVERVIEW\n`;
+            summary += `Total AI Uses: ${entries.length}\n`;
+            summary += `Current Streak: ${calculateStreak()} days\n\n`;
+            summary += `USAGE BY CATEGORY\n`;
+            Object.entries(patterns).forEach(([cat, count]) => {
+                summary += `${cat}: ${count}\n`;
+            });
+            summary += `\nUSAGE BY TOOL\n`;
+            Object.entries(tools).forEach(([tool, count]) => {
+                summary += `${tool}: ${count}\n`;
+            });
+            summary += `\n\nDETAILED ENTRIES\n`;
+            summary += `${'='.repeat(50)}\n\n`;
+            
+            entries.forEach(e => {
+                const date = new Date(e.timestamp);
+                summary += `[${date.toLocaleString()}]\n`;
+                summary += `Tool: ${e.tool}\n`;
+                summary += `Category: ${e.category}\n`;
+                summary += `Task: ${e.description}\n`;
+                if (e.outcome) summary += `Outcome: ${e.outcome}\n`;
+                summary += `\n${'-'.repeat(50)}\n\n`;
+            });
+
+            return summary;
+        }
+
+        function clearData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                entries = [];
+                localStorage.setItem('aiUsageEntries', JSON.stringify(entries));
+                updateDashboard();
+                renderEntries();
+                showToast('All data cleared');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
